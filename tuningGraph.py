@@ -37,8 +37,9 @@ upFreq_B3 = np.array([114.9])
 
 # ALMA reoptimize
 
-loFreq_reopt = np.array([92.01, 103.76, 95.71000000000001, 107.46000000000001, 99.41000000000001, 111.16000000000001, 125.15, 136.9, 128.85, 140.6, 132.54999999999998, 144.29999999999998])
-upFreq_reopt = np.array([95.76, 107.51, 99.46000000000001, 111.21000000000001, 103.16000000000001, 114.91000000000001, 128.9, 140.65, 132.6, 144.35, 136.29999999999998, 148.04999999999998])
+
+loFreq_reopt = np.array([88.815, 100.565, 92.515, 104.265, 96.215, 107.965, 139.4, 151.15, 143.1, 154.85, 146.79999999999998, 158.54999999999998])
+upFreq_reopt = np.array([92.565, 104.315, 96.265, 108.015, 99.965, 111.715, 143.15, 154.9, 146.85, 158.6, 150.54999999999998, 162.29999999999998])
 
 # DESHIMA & $220-440$ &/& $1.36-0.68$ \\
 
@@ -94,14 +95,13 @@ for i in range(scaleFactor):
 # Not-Robust 2 lines: 3.30
 # Robust 1 line: 3.0
 # Robust 2 lines: 2.7
-# print(RSG.RSGquality(loFreq,upFreq,np.array([3.3])),sigma_threshold=5,lin_arr_size=1000)
-# print(RSG.RSGquality(loFreq,upFreq,np.array([3.0])),sigma_threshold=5,lin_arr_size=1000)
-# print(RSG.RSGquality(loFreq,upFreq,np.array([2.7])),sigma_threshold=5,lin_arr_size=1000)
+# print(RSG.RSGquality(loFreq,upFreq,np.array([3.3])),sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+# print(RSG.RSGquality(loFreq,upFreq,np.array([3.0])),sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+# print(RSG.RSGquality(loFreq,upFreq,np.array([2.7])),sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
 
+## Plot transmission of atmosphere across the instrument
 # transmission = RSG.tauCalculator(1)
-
 # plt.plot(transmission[:,0],transmission[:,1])
-
 # i = 0
 # plt.plot([loFreq_B3B4,upFreq_B3B4],[i/10.,i/10.])
 # i+= 1
@@ -120,7 +120,7 @@ for i in range(scaleFactor):
 # plt.plot([loFreq_ZSpec,upFreq_ZSpec],[i/10.,i/10.])
 # plt.show()
 
-print('(no_lines,one_line,two_lines,more_lines,robust_single_lines,non_robust_double_lines)')
+# print('(no_lines,one_line,two_lines,more_lines,robust_single_lines,non_robust_double_lines)')
 
 fig = plt.figure(figsize=(8,6),constrained_layout=True)
 fig.text(0.01,0.5,'Robust redshift coverage [0 - 1]',rotation=90,fontsize=14,verticalalignment='center')
@@ -138,246 +138,277 @@ f_ax4 = plt.axes([0.1+1*dx,0.1+0*dy,dx,dy]) # Superspec
 f_ax9 = plt.axes([0.1+2*dx,0.1+0*dy,dx,dy]) # OST
 
 
-# 0; no_lines
-# 1; one_line
-# 2; two_lines
-# 3; more_lines
-# 4; robust_single_lines
-# 5; non_robust_double_lines
+# tuningQuality[0]; no_lines
+# tuningQuality[1]; one_line - exactly 1 line
+# tuningQuality[2]; two_lines - exactly 2 lines
+# tuningQuality[3]; more_lines - more than 2 lines
+# tuningQuality[4]; robust_single_lines - The tuningQuality[1] detections that are robust
+# tuningQuality[5]; non_robust_double_lines - The tuningQuality[2] detections that are not robust
+# tuningQuality[0:4].sum() = 1 (i.e., columns 0, 1, 2 and 3 add to 1)
+# columns 4 and 5 are thus the nr of 1 and 2-line special situations
 
-
+threshold_high = 5
+threshold_low = 5
+dz_low = 0.07
+dz_high = 0.13
 
 for i in range(10):
-	redshiftDistribution =np.linspace(i,i+1,100)
+	# Generate a redshift distribution between z and z + 1
+	redshiftDistribution = np.linspace(i,i+1,100)
 	print('loFreq_B3B4')
+	# A variable to get the graph to look as I want
 	iOffset = 0
-	tuningQuality = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000)
-	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,redshiftDistribution,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+	# Generate three 'tuningQualities' for 1) typical observations, 2) including CI & H2O, and 3) reduced dz/(1+z) or sigma_threshold
+	tuningQuality = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,redshiftDistribution,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 	if i == 8:
-		tuningQuality = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_herbs_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset= 0.33
 	elif i == 9:
-		tuningQuality = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_spt_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3B4,upFreq_B3B4,z_spt_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset = 0.66
+	# Define NoDetections, Non-robust detections, robust detections, CI-based robust detections and lower SN or dz/(1+z) robust detections.
 	NoDetections = tuningQuality[0]
 	NonRobustDetections = tuningQuality[1]
 	RobustDetections = tuningQuality[2] + tuningQuality[3]
+	CI_detections = tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]
+	lowerSN_detections = tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]
 	f_ax1.bar(i+iOffset+0.5,NonRobustDetections+RobustDetections,zorder=1,color='#FFD79F',width=1.0)
 	f_ax1.bar(i+iOffset+0.5,RobustDetections,zorder=2,color='#9DDBFF',width=1.0)
 	f_ax1.bar(i+iOffset+0.5,tuningQuality[4],bottom=RobustDetections,hatch='////',lw=0.0,edgecolor='#9DDBFF',fill=False,width=1.0,zorder=4)
 	f_ax1.bar(i+iOffset+0.5,-1*tuningQuality[5],bottom=RobustDetections,hatch='\\\\\\\\',lw=0.0,edgecolor='#FFD79F',fill=False,width=1.0,zorder=4)
-	f_ax1.step([i+iOffset,i+iOffset+1],[tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4],tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]],lw=1,color=grey,zorder=5,ls=':')
-	f_ax1.step([i+iOffset,i+iOffset+1],[tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4],tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]],lw=1,color='k',zorder=5,ls='--')
+	# Plot a grey line for CI detections
+	f_ax1.step([i+iOffset,i+iOffset+1],[CI_detections,CI_detections],lw=1,color=grey,zorder=5,ls=':')
+	# Plot a black dashed line for lower-SN or dz/(1+z) detections
+	f_ax1.step([i+iOffset,i+iOffset+1],[lowerSN_detections,lowerSN_detections],lw=1,color='k',zorder=5,ls='--')
+	# Add text to describe the source
 	f_ax1.text(0.5,0.04,'Band 3 & 4 linescan',zorder=30)
+	# Print the 'tuningQuality'; repeat for the other 8 assessments
 	print(tuningQuality)
 	print('loFreq_B3')
-	tuningQuality = RSG.RSGquality(loFreq_B3,upFreq_B3,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000)
-	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3,upFreq_B3,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3,upFreq_B3,redshiftDistribution,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+	tuningQuality = RSG.RSGquality(loFreq_B3,upFreq_B3,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3,upFreq_B3,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3,upFreq_B3,redshiftDistribution,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 	if i == 8:
-		tuningQuality = RSG.RSGquality(loFreq_B3,upFreq_B3,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3,upFreq_B3,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3,upFreq_B3,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_B3,upFreq_B3,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3,upFreq_B3,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3,upFreq_B3,z_herbs_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset= 0.33
 	elif i == 9:
-		tuningQuality = RSG.RSGquality(loFreq_B3,upFreq_B3,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3,upFreq_B3,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3,upFreq_B3,z_spt_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_B3,upFreq_B3,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_B3,upFreq_B3,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_B3,upFreq_B3,z_spt_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset = 0.66
 	NoDetections = tuningQuality[0]
 	NonRobustDetections = tuningQuality[1]
 	RobustDetections = tuningQuality[2] + tuningQuality[3]
+	CI_detections = tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]
+	lowerSN_detections = tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]
 	f_ax2.bar(i+iOffset+0.5,NonRobustDetections+RobustDetections,zorder=1,color='#FFD79F',width=1.0)
 	f_ax2.bar(i+iOffset+0.5,RobustDetections,zorder=2,color='#9DDBFF',width=1.0)
 	f_ax2.text(0.5,0.04,'Band 3',zorder=30)
 	f_ax2.bar(i+iOffset+0.5,tuningQuality[4],bottom=RobustDetections,hatch='////',lw=0.0,edgecolor='#9DDBFF',fill=False,width=1.0,zorder=4)
 	f_ax2.bar(i+iOffset+0.5,-1*tuningQuality[5],bottom=RobustDetections,hatch='\\\\\\\\',lw=0.0,edgecolor='#FFD79F',fill=False,width=1.0,zorder=4)
-	f_ax2.step([i+iOffset,i+iOffset+1],[tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4],tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]],lw=1,color=grey,zorder=5,ls=':')
-	f_ax2.step([i+iOffset,i+iOffset+1],[tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4],tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]],lw=1,color='k',zorder=5,ls='--')
+	f_ax2.step([i+iOffset,i+iOffset+1],[CI_detections,CI_detections],lw=1,color=grey,zorder=5,ls=':')
+	f_ax2.step([i+iOffset,i+iOffset+1],[lowerSN_detections,lowerSN_detections],lw=1,color='k',zorder=5,ls='--')
 	print(tuningQuality)
 	print('loFreq_DESHIMA')
-	tuningQuality = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000)
-	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,redshiftDistribution,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+	tuningQuality = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,redshiftDistribution,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 	if i == 8:
-		tuningQuality = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_herbs_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset= 0.33
 	elif i == 9:
-		tuningQuality = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_spt_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_DESHIMA,upFreq_DESHIMA,z_spt_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset = 0.66
 	NoDetections = tuningQuality[0]
 	NonRobustDetections = tuningQuality[1]
 	RobustDetections = tuningQuality[2] + tuningQuality[3]
+	CI_detections = tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]
+	lowerSN_detections = tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]
 	f_ax3.bar(i+iOffset+0.5,NonRobustDetections+RobustDetections,zorder=1,color='#FFD79F',width=1.0)
 	f_ax3.bar(i+iOffset+0.5,RobustDetections,zorder=2,color='#9DDBFF',width=1.0)
 	f_ax3.text(0.5,0.04,'DESHIMA',zorder=30)
 	f_ax3.bar(i+iOffset+0.5,tuningQuality[4],bottom=RobustDetections,hatch='////',lw=0.0,edgecolor='#9DDBFF',fill=False,width=1.0,zorder=4)
 	f_ax3.bar(i+iOffset+0.5,-1*tuningQuality[5],bottom=RobustDetections,hatch='\\\\\\\\',lw=0.0,edgecolor='#FFD79F',fill=False,width=1.0,zorder=4)
-	f_ax3.step([i+iOffset,i+iOffset+1],[tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4],tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]],lw=1,color=grey,zorder=5,ls=':')
-	f_ax3.step([i+iOffset,i+iOffset+1],[tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4],tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]],lw=1,color='k',zorder=5,ls='--')
+	f_ax3.step([i+iOffset,i+iOffset+1],[CI_detections,CI_detections],lw=1,color=grey,zorder=5,ls=':')
+	f_ax3.step([i+iOffset,i+iOffset+1],[lowerSN_detections,lowerSN_detections],lw=1,color='k',zorder=5,ls='--')
 	print(tuningQuality)
 	print('loFreq_Superspec')
-	tuningQuality = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000)
-	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,redshiftDistribution,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+	tuningQuality = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,redshiftDistribution,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 	if i == 8:
-		tuningQuality = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_herbs_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset= 0.33
 	elif i == 9:
-		tuningQuality = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_spt_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Superspec,upFreq_Superspec,z_spt_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset = 0.66
 	NoDetections = tuningQuality[0]
 	NonRobustDetections = tuningQuality[1]
 	RobustDetections = tuningQuality[2] + tuningQuality[3]
+	CI_detections = tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]
+	lowerSN_detections = tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]
 	f_ax4.bar(i+iOffset+0.5,NonRobustDetections+RobustDetections,zorder=1,color='#FFD79F',width=1.0)
 	f_ax4.bar(i+iOffset+0.5,RobustDetections,zorder=2,color='#9DDBFF',width=1.0)
 	f_ax4.text(0.5,0.04,'SuperSpec',zorder=30)
 	f_ax4.bar(i+iOffset+0.5,tuningQuality[4],bottom=RobustDetections,hatch='////',lw=0.0,edgecolor='#9DDBFF',fill=False,width=1.0,zorder=4)
 	f_ax4.bar(i+iOffset+0.5,-1*tuningQuality[5],bottom=RobustDetections,hatch='\\\\\\\\',lw=0.0,edgecolor='#FFD79F',fill=False,width=1.0,zorder=4)
-	f_ax4.step([i+iOffset,i+iOffset+1],[tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4],tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]],lw=1,color=grey,zorder=5,ls=':')
-	f_ax4.step([i+iOffset,i+iOffset+1],[tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4],tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]],lw=1,color='k',zorder=5,ls='--')
+	f_ax4.step([i+iOffset,i+iOffset+1],[CI_detections,CI_detections],lw=1,color=grey,zorder=5,ls=':')
+	f_ax4.step([i+iOffset,i+iOffset+1],[lowerSN_detections,lowerSN_detections],lw=1,color='k',zorder=5,ls='--')
 	print(tuningQuality)
 	print('loFreq_recalculation')
-	tuningQuality = RSG.RSGquality(loFreq_reopt,upFreq_reopt,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000)
-	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_reopt,upFreq_reopt,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_reopt,upFreq_reopt,redshiftDistribution,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+	tuningQuality = RSG.RSGquality(loFreq_reopt,upFreq_reopt,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_reopt,upFreq_reopt,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_reopt,upFreq_reopt,redshiftDistribution,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 	if i == 8:
-		tuningQuality = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_herbs_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset= 0.33
 	elif i == 9:
-		tuningQuality = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_spt_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_reopt,upFreq_reopt,z_spt_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset = 0.66
 	NoDetections = tuningQuality[0]
 	NonRobustDetections = tuningQuality[1]
 	RobustDetections = tuningQuality[2] + tuningQuality[3]
+	CI_detections = tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]
+	lowerSN_detections = tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]
 	f_ax5.bar(i+iOffset+0.5,NonRobustDetections+RobustDetections,zorder=1,color='#FFD79F',width=1.0)
 	f_ax5.bar(i+iOffset+0.5,RobustDetections,zorder=2,color='#9DDBFF',width=1.0)
 	f_ax5.text(0.5,0.04,'Band 3 & 4 (eff.)',zorder=30)
 	f_ax5.bar(i+iOffset+0.5,tuningQuality[4],bottom=RobustDetections,hatch='////',lw=0.0,edgecolor='#9DDBFF',fill=False,width=1.0,zorder=4)
 	f_ax5.bar(i+iOffset+0.5,-1*tuningQuality[5],bottom=RobustDetections,hatch='\\\\\\\\',lw=0.0,edgecolor='#FFD79F',fill=False,width=1.0,zorder=4)
-	f_ax5.step([i+iOffset,i+iOffset+1],[tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4],tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]],lw=1,color=grey,zorder=5,ls=':')
-	f_ax5.step([i+iOffset,i+iOffset+1],[tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4],tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]],lw=1,color='k',zorder=5,ls='--')
+	f_ax5.step([i+iOffset,i+iOffset+1],[CI_detections,CI_detections],lw=1,color=grey,zorder=5,ls=':')
+	f_ax5.step([i+iOffset,i+iOffset+1],[lowerSN_detections,lowerSN_detections],lw=1,color='k',zorder=5,ls='--')
 	print(tuningQuality)
 	print('loFreq_RSR')
-	tuningQuality = RSG.RSGquality(loFreq_RSR,upFreq_RSR,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000)
-	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_RSR,upFreq_RSR,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_RSR,upFreq_RSR,redshiftDistribution,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+	tuningQuality = RSG.RSGquality(loFreq_RSR,upFreq_RSR,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_RSR,upFreq_RSR,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_RSR,upFreq_RSR,redshiftDistribution,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 	if i == 8:
-		tuningQuality = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_herbs_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset= 0.33
 	elif i == 9:
-		tuningQuality = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_spt_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_RSR,upFreq_RSR,z_spt_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset = 0.66
 	NoDetections = tuningQuality[0]
 	NonRobustDetections = tuningQuality[1]
 	RobustDetections = tuningQuality[2] + tuningQuality[3]
+	CI_detections = tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]
+	lowerSN_detections = tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]
 	f_ax6.bar(i+iOffset+0.5,NonRobustDetections+RobustDetections,zorder=1,color='#FFD79F',width=1.0)
 	f_ax6.bar(i+iOffset+0.5,RobustDetections,zorder=2,color='#9DDBFF',width=1.0)
 	f_ax6.text(0.5,0.04,'RSR',zorder=30)
 	f_ax6.bar(i+iOffset+0.5,tuningQuality[4],bottom=RobustDetections,hatch='////',lw=0.0,edgecolor='#9DDBFF',fill=False,width=1.0,zorder=4)
 	f_ax6.bar(i+iOffset+0.5,-1*tuningQuality[5],bottom=RobustDetections,hatch='\\\\\\\\',lw=0.0,edgecolor='#FFD79F',fill=False,width=1.0,zorder=4)
-	f_ax6.step([i+iOffset,i+iOffset+1],[tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4],tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]],lw=1,color=grey,zorder=5,ls=':')
-	f_ax6.step([i+iOffset,i+iOffset+1],[tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4],tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]],lw=1,color='k',zorder=5,ls='--')
+	f_ax6.step([i+iOffset,i+iOffset+1],[CI_detections,CI_detections],lw=1,color=grey,zorder=5,ls=':')
+	f_ax6.step([i+iOffset,i+iOffset+1],[lowerSN_detections,lowerSN_detections],lw=1,color='k',zorder=5,ls='--')
 	print(tuningQuality)
 	print('loFreq_Zpectrometer')
-	tuningQuality = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000)
-	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,redshiftDistribution,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+	tuningQuality = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,redshiftDistribution,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 	if i == 8:
-		tuningQuality = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_herbs_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset= 0.33
 	elif i == 9:
-		tuningQuality = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_spt_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_Zpectrometer,upFreq_Zpectrometer,z_spt_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset = 0.66
 	NoDetections = tuningQuality[0]
 	NonRobustDetections = tuningQuality[1]
 	RobustDetections = tuningQuality[2] + tuningQuality[3]
+	CI_detections = tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]
+	lowerSN_detections = tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]
 	f_ax7.bar(i+iOffset+0.5,NonRobustDetections+RobustDetections,zorder=1,color='#FFD79F',width=1.0)
 	f_ax7.bar(i+iOffset+0.5,RobustDetections,zorder=2,color='#9DDBFF',width=1.0)
 	f_ax7.text(0.5,0.04,'Zpectrometer',zorder=30)
 	f_ax7.bar(i+iOffset+0.5,tuningQuality[4],bottom=RobustDetections,hatch='////',lw=0.0,edgecolor='#9DDBFF',fill=False,width=1.0,zorder=4)
 	f_ax7.bar(i+iOffset+0.5,-1*tuningQuality[5],bottom=RobustDetections,hatch='\\\\\\\\',lw=0.0,edgecolor='#FFD79F',fill=False,width=1.0,zorder=4)
-	f_ax7.step([i+iOffset,i+iOffset+1],[tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4],tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]],lw=1,color=grey,zorder=5,ls=':')
-	f_ax7.step([i+iOffset,i+iOffset+1],[tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4],tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]],lw=1,color='k',zorder=5,ls='--')
+	f_ax7.step([i+iOffset,i+iOffset+1],[CI_detections,CI_detections],lw=1,color=grey,zorder=5,ls=':')
+	f_ax7.step([i+iOffset,i+iOffset+1],[lowerSN_detections,lowerSN_detections],lw=1,color='k',zorder=5,ls='--')
 	print(tuningQuality)
 	print('loFreq_ZSpec')
-	tuningQuality = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000)
-	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,redshiftDistribution,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+	tuningQuality = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,redshiftDistribution,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 	if i == 8:
-		tuningQuality = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_herbs_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset= 0.33
 	elif i == 9:
-		tuningQuality = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_spt_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_ZSpec,upFreq_ZSpec,z_spt_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset = 0.66
 	NoDetections = tuningQuality[0]
 	NonRobustDetections = tuningQuality[1]
 	RobustDetections = tuningQuality[2] + tuningQuality[3]
+	CI_detections = tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]
+	lowerSN_detections = tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]
 	f_ax8.bar(i+iOffset+0.5,NonRobustDetections+RobustDetections,zorder=1,color='#FFD79F',width=1.0)
 	f_ax8.bar(i+iOffset+0.5,RobustDetections,zorder=2,color='#9DDBFF',width=1.0)
 	f_ax8.bar(i+iOffset+0.5,tuningQuality[4],bottom=RobustDetections,hatch='////',lw=0.0,edgecolor='#9DDBFF',fill=False,width=1.0,zorder=4)
 	f_ax8.bar(i+iOffset+0.5,-1*tuningQuality[5],bottom=RobustDetections,hatch='\\\\\\\\',lw=0.0,edgecolor='#FFD79F',fill=False,width=1.0,zorder=4)
-	f_ax8.step([i+iOffset,i+iOffset+1],[tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4],tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]],lw=1,color=grey,zorder=5,ls=':')
-	f_ax8.step([i+iOffset,i+iOffset+1],[tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4],tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]],lw=1,color='k',zorder=5,ls='--')
+	f_ax8.step([i+iOffset,i+iOffset+1],[CI_detections,CI_detections],lw=1,color=grey,zorder=5,ls=':')
+	f_ax8.step([i+iOffset,i+iOffset+1],[lowerSN_detections,lowerSN_detections],lw=1,color='k',zorder=5,ls='--')
 	f_ax8.text(0.5,0.04,'Z-Spec',zorder=30)
 	print(tuningQuality)
 	print('loFreq_OST')
-	tuningQuality = RSG.RSGquality(loFreq_OST,upFreq_OST,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000)
-	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_OST,upFreq_OST,redshiftDistribution,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_OST,upFreq_OST,redshiftDistribution,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+	tuningQuality = RSG.RSGquality(loFreq_OST,upFreq_OST,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+	tuningQuality_withCI_lines = RSG.RSGquality(loFreq_OST,upFreq_OST,redshiftDistribution,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+	tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_OST,upFreq_OST,redshiftDistribution,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 	if i == 8:
-		tuningQuality = RSG.RSGquality(loFreq_OST,upFreq_OST,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_OST,upFreq_OST,z_herbs_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_OST,upFreq_OST,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_OST,upFreq_OST,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_OST,upFreq_OST,z_herbs_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_OST,upFreq_OST,z_herbs_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset= 0.33
 	elif i == 9:
-		tuningQuality = RSG.RSGquality(loFreq_OST,upFreq_OST,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000)
-		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_OST,upFreq_OST,z_spt_smooth,sigma_threshold=5,lin_arr_size=1000,includeCI=True)
-		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_OST,upFreq_OST,z_spt_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=True)
+		tuningQuality = RSG.RSGquality(loFreq_OST,upFreq_OST,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000)
+		tuningQuality_withCI_lines = RSG.RSGquality(loFreq_OST,upFreq_OST,z_spt_smooth,sigma_threshold=threshold_high,dzUncertainty=dz_high,lin_arr_size=1000,includeCI=True)
+		tuningQuality_with_lower_sigma = RSG.RSGquality(loFreq_OST,upFreq_OST,z_spt_smooth,sigma_threshold=threshold_low,dzUncertainty=dz_low,lin_arr_size=1000)
 		iOffset = 0.66
 	NoDetections = tuningQuality[0]
 	NonRobustDetections = tuningQuality[1]
 	RobustDetections = tuningQuality[2] + tuningQuality[3]
+	CI_detections = tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]
+	lowerSN_detections = tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]
 	f_ax9.bar(i+iOffset+0.5,NonRobustDetections+RobustDetections,zorder=1,color='#FFD79F',width=1.0)
 	f_ax9.bar(i+iOffset+0.5,RobustDetections,zorder=2,color='#9DDBFF',width=1.0)
 	f_ax9.bar(i+iOffset+0.5,tuningQuality[4],bottom=RobustDetections,hatch='////',lw=0.0,edgecolor='#9DDBFF',fill=False,width=1.0,zorder=4)
 	f_ax9.bar(i+iOffset+0.5,-1*tuningQuality[5],bottom=RobustDetections,hatch='\\\\\\\\',lw=0.0,edgecolor='#FFD79F',fill=False,width=1.0,zorder=4)
-	f_ax9.step([i+iOffset,i+iOffset+1],[tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4],tuningQuality_withCI_lines[2] + tuningQuality_withCI_lines[3] - tuningQuality_withCI_lines[5] + tuningQuality_withCI_lines[4]],lw=1,color=grey,zorder=5,ls=':')
-	f_ax9.step([i+iOffset,i+iOffset+1],[tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4],tuningQuality_with_lower_sigma[2] + tuningQuality_with_lower_sigma[3] - tuningQuality_with_lower_sigma[5] + tuningQuality_with_lower_sigma[4]],lw=1,color='k',zorder=5,ls='--')
+	f_ax9.step([i+iOffset,i+iOffset+1],[CI_detections,CI_detections],lw=1,color=grey,zorder=5,ls=':')
+	f_ax9.step([i+iOffset,i+iOffset+1],[lowerSN_detections,lowerSN_detections],lw=1,color='k',zorder=5,ls='--')
 	f_ax9.text(0.5,0.04,'OST (band 6)',zorder=30)
 	print(tuningQuality)
 
 
-
+# Differentiate between z-based and sample-based assessment
 f_ax1.axvline(8,lw=0.75,ls='--',color='k')
 f_ax2.axvline(8,lw=0.75,ls='--',color='k')
 f_ax3.axvline(8,lw=0.75,ls='--',color='k')
@@ -388,6 +419,7 @@ f_ax7.axvline(8,lw=0.75,ls='--',color='k')
 f_ax8.axvline(8,lw=0.75,ls='--',color='k')
 f_ax9.axvline(8,lw=0.75,ls='--',color='k')
 
+# Complicated formatting things to make a nice graph
 from matplotlib.ticker import NullFormatter
 nullfmt = NullFormatter()
 f_ax1.get_xaxis().set_ticks([])
@@ -409,7 +441,7 @@ f_ax8.get_yaxis().set_ticks([])
 f_ax9.get_xaxis().set_ticks([])
 f_ax9.get_yaxis().set_ticks([]) 
 
-
+# Jump through considerable hoops to get the figure to plot axes right
 f_ax1.set_xticks([0,2,4,6,8,7.5+1+ 0.33, 1+8.5+0.66 ])
 f_ax1.set_xticklabels(['','','','','','',''])
 f_ax2.set_xticks([0,2,4,6,8,7.5+1+ 0.33, 1+8.5+0.66 ])
@@ -459,6 +491,7 @@ f_ax3.set_yticklabels(['0','0.25','0.5','0.75','1'])
 f_ax5.set_yticks([0,0.25,0.5,0.75,1.0])
 f_ax5.set_yticklabels(['','0.25','0.5','0.75','1'])
 
+# Limits
 f_ax1.set_xlim(0,11)
 f_ax1.set_ylim(0,1.0)
 f_ax2.set_xlim(0,11)
@@ -478,7 +511,7 @@ f_ax8.set_ylim(0,1.0)
 f_ax9.set_xlim(0,11)
 f_ax9.set_ylim(0,1.0)
 
-
+# Save & show
 plt.savefig('RedshiftSearchEfficiency.pdf')
 
 plt.show()
@@ -488,17 +521,6 @@ plt.show()
 
 
 
-
-
-
-
-
-# for i in range(10):
-# 	for i in range(scaleFactor):
-# 		z_herbs_smooth[i*len(z_herbs):(i+1)*len(z_herbs)] = z_herbs + blendFactor*np.random.normal(size=len(z_herbs))
-# 	print(RSG.RSGquality(loFreq,upFreq,z_herbs_smooth,sigma_threshold=5),sigma_threshold=5,lin_arr_size=1000)
-# 	print(RSG.RSGquality(loFreq,upFreq,z_herbs_smooth),sigma_threshold=5,lin_arr_size=1000)
-# 	print(RSG.RSGquality(loFreq,upFreq,z_herbs_smooth,sigma_threshold=5),sigma_threshold=5,lin_arr_size=1000)
 
 
 

@@ -46,9 +46,9 @@ NII205 	= (1e-9)*c/(205e-6)
 ## RSG plot
 ##-----------------------------------------
 
-def RSGplot(filter_down,filter_up,IDname,z_phot=-99,sl_freq_obs=[-99],figSizeX=6,figSizeY=4,redshift_down=0,redshift_up=7,single_line_colour='#FFD79F',multi_line_colour='#9DDBFF',LSBUSB=False,DPIVal=400,nr_of_CO_lines = 20):
+def RSGplot(filter_down,filter_up,IDname,z_phot=-99,sl_freq_obs=[-99],figSizeX=6,figSizeY=4,redshift_down=0,redshift_up=7,single_line_colour='#FFD79F',multi_line_colour='#9DDBFF',LSBUSB=False,DPIVal=400,nr_of_CO_lines = 20,dzUncertainty=0.13):
     sl_freq_obs.sort(reverse=True)
-    dz_phot = (z_phot+1)*0.13
+    dz_phot = (z_phot+1)*dzUncertainty
     ##-----------------------------------------
     ## Define your redshift, frequency, SL
     ##-----------------------------------------
@@ -244,7 +244,7 @@ def giveMultiFactors(a,b):
         return min(a,b)*(multiFac-1)/multiFac- min(a,b)
 
 
-def RSGquality(filter_down,filter_up,redshift_array,includeCI = False, nr_of_CO_lines=20,lin_arr_size=10000,sigma_threshold=5):
+def RSGquality(filter_down,filter_up,redshift_array,includeCI = False, nr_of_CO_lines=20,lin_arr_size=10000,sigma_threshold=5,dzUncertainty=0.13):
     # We split the redshift spacing up into a linear array (redshift_lin), and then do a
     # nearest fit of the redshift array supplied by the user (redshift_array)
     # We ensure the redshift array is wide enough using, also to exclude redshifts:
@@ -315,7 +315,7 @@ def RSGquality(filter_down,filter_up,redshift_array,includeCI = False, nr_of_CO_
                     if (l+1) == Jco:
                         # do nothing
                         1+1
-                    elif abs((l+1 - Jco)*dz/(1+redshift_lin[i])) > sigma_threshold*0.13:
+                    elif abs((l+1 - Jco)*dz/(1+redshift_lin[i])) > sigma_threshold*dzUncertainty: #0.13
                         # do nothing
                         1+1
                     else:
@@ -369,7 +369,7 @@ def RSGquality(filter_down,filter_up,redshift_array,includeCI = False, nr_of_CO_
                 Jco = min(CO_obs)
                 dz = (1+redshift_lin[i])/Jco
                 # Test if this solution is already X sigma away
-                if abs(J_other*dz/(1+redshift_lin[i])) > 0.13*sigma_threshold:
+                if abs(J_other*dz/(1+redshift_lin[i])) > dzUncertainty*sigma_threshold:
                     redshift_lin_seen_two == 1
                 # Otherwise, we check degeneracy of the neighbouring solution
                 else:

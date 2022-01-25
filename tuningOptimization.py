@@ -49,7 +49,7 @@ dynamicRange3 = 1 - (3.75 * 2 / dFreq3)
 dFreq4 = upper_tuning4[0][0]-lower_tuning4[0][0]
 dynamicRange4 = 1 - (3.75 * 2 / dFreq4)
 
-nrOfIterations = 10
+nrOfIterations = 100
 robustFraction = 0
 qualityArray = np.zeros([nrOfIterations,nrOfIterations])
 multipleLines = np.zeros([nrOfIterations,nrOfIterations])
@@ -58,6 +58,7 @@ overlapFraction = 0.05
 # print('(no_lines,one_line,two_lines,more_lines,robust_single_lines,non_robust_double_lines)')
 
 for i in (range(nrOfIterations)):
+	print(i)
 	tuning3 = RSG.giveALMA(3,dynamicRange3*i/nrOfIterations)
 	tuning3[0].append(tuning3[0][-2]+3.75-overlapFraction)
 	tuning3[0].append(tuning3[0][-2]+3.75-overlapFraction)
@@ -79,7 +80,7 @@ for i in (range(nrOfIterations)):
 		tuning4[1].append(tuning4[1][-2]+3.75-overlapFraction)
 		loFreq = [item for sublist in [tuning3[0],tuning4[0]] for item in sublist]
 		upFreq = [item for sublist in [tuning3[1],tuning4[1]] for item in sublist]
-		tuningQuality = RSG.RSGquality(loFreq,upFreq,z_herbs_smooth,sigma_threshold=3,lin_arr_size=1000,includeCI=False)
+		tuningQuality = RSG.RSGquality(loFreq,upFreq,z_herbs_smooth,sigma_threshold=5,dzUncertainty=0.07,lin_arr_size=1000,includeCI=False)
 		robustness = tuningQuality[2] + tuningQuality[3] - tuningQuality[5]*0.5 + tuningQuality[4] + (tuningQuality[1]-tuningQuality[4])*0.5
 		qualityArray[i,j] = robustness
 		multipleLines[i,j] = tuningQuality[2] + tuningQuality[3]
@@ -87,7 +88,7 @@ for i in (range(nrOfIterations)):
 			robustFraction = robustness
 			loFreqSave = loFreq
 			upFreqSave = upFreq
-			print(str(np.round(robustness*100,1))+'% robust')
+			print(str(np.round(robustness*100,1))+'% robust + 0.5 x non-robust')
 			print(loFreq)
 			print(upFreq)
 
@@ -104,12 +105,14 @@ c = plt.imshow(qualityArray.transpose(), cmap ='coolwarm', #vmin = qualityArray.
 #	 colors=grey,levels=np.linspace(0,1,int(1/0.05)+1))
 
 cbar = plt.colorbar(c)
-cbar.set_ticks([0.4, 0.5,0.6])
-cbar.set_ticklabels(["0.4", "0.5", "0.6"])
-# cbar.set_label('Robust redshift probability')
+cbar.set_ticks([0.85,0.9])
+cbar.set_ticklabels(["0.85", "0.90"])
+# cbar.set_label('Figure of merit')
 
-plt.scatter(92.01,125.15,marker='X',color='k',s=40,zorder=200)
-plt.scatter(92.01,125.15,marker='X',color=plt.get_cmap('coolwarm')(255),s=10,zorder=200)
+
+
+plt.scatter(loFreqSave[0],loFreqSave[6],marker='X',color='k',s=40,zorder=200)
+plt.scatter(loFreqSave[0],loFreqSave[6],marker='X',color=plt.get_cmap('coolwarm')(255),s=10,zorder=200)
 
 plt.ylabel('Band 4 Frequency [GHz]',fontsize=14)
 plt.xlabel('Band 3 Frequency [GHz]',fontsize=14)
@@ -117,7 +120,7 @@ plt.yticks([125,130,135,140])
 plt.xticks([84,87,90,93])
 plt.tight_layout()
 
-# plt.savefig('band34_tuning.pdf')
+plt.savefig('band34_tuning.pdf')
 plt.show()
 
 
