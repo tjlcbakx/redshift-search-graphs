@@ -111,8 +111,8 @@ cbar.set_ticklabels(["0.85", "0.90"])
 
 
 
-plt.scatter(loFreqSave[0],loFreqSave[6],marker='X',color='k',s=40,zorder=200)
-plt.scatter(loFreqSave[0],loFreqSave[6],marker='X',color=plt.get_cmap('coolwarm')(255),s=10,zorder=200)
+plt.scatter(loFreqSave[0],loFreqSave[6],marker='X',color='k',s=100,zorder=200)
+plt.scatter(loFreqSave[0],loFreqSave[6],marker='X',color=plt.get_cmap('coolwarm')(255),s=20,zorder=200)
 
 plt.ylabel('Band 4 Frequency [GHz]',fontsize=14)
 plt.xlabel('Band 3 Frequency [GHz]',fontsize=14)

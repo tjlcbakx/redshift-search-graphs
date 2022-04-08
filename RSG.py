@@ -411,8 +411,51 @@ def RSGquality(filter_down,filter_up,redshift_array,includeCI = False, nr_of_CO_
     return np.array([no_lines,one_line,two_lines,more_lines,robust_single_lines,non_robust_double_lines])
 
 
-
-
+def makeSLED(coTransitions, coIntFluxes, coIntErrors,figSizeX=4,figSizeY=4,ylimMultiplier=1.4):
+    coTransitions = np.array(coTransitions); coIntFluxes = np.array(coIntFluxes); coIntErrors = np.array(coIntErrors);    
+    plt.figure(figsize = (figSizeX,figSizeY))
+    f1 = plt.axes([.175,.125,.8,.8])
+    # Load the CO SLEDS
+    fixsen_mw_indisk_co=    np.array([1,2,3,4,5,6,7,8])
+    fixsen_mw_indisk_ico=   np.array([0.5,1.15,1.267,0.85,0.58,0.08333,0.04286,0.225])/0.5
+    fixsen_mw_indisk_ico_err=   np.array([0.3,0.1,0.1,0.075,0.12,0.1167,0.1429,0.1])/0.5
+    coLinear = np.arange(1,coTransitions.max()+2)
+    thermalizedCO = coLinear**2
+    harrington_co = np.arange(1,13)
+    harrington_ico = np.array([1, 0.73,0.75,0.46,0.36,0.28,0.18,0.08,0.07,0.07,0.05,0.02])*harrington_co**2
+    harrington_ico_err = np.array([0,0.10, 0.11, 0.07, 0.06, 0.04, 0.03, 0.02, 0.02, 0.02, 0.02, 0.01])*harrington_co**2
+    # Normalize all observations to the thermalized profile
+    lowestDetectedCOTransition = coTransitions[coIntFluxes>0][0]
+    if lowestDetectedCOTransition > 8:
+        print('Cannot reflect the milky way accurately')
+        normalizeMilkyWay = fixsen_mw_indisk_ico[8 - 1]/thermalizedCO[8 - 1]
+        if lowestDetectedCOTransition > 11:
+            print('Cannot reflect Harrington profile accurately')
+            normalizeHarrington = harrington_ico[11 - 1]/thermalizedCO[11 - 1]
+        else:
+            normalizeHarrington = harrington_ico[lowestDetectedCOTransition - 1]/thermalizedCO[lowestDetectedCOTransition - 1]
+    else:
+        normalizeHarrington = harrington_ico[lowestDetectedCOTransition - 1]/thermalizedCO[lowestDetectedCOTransition - 1]
+        normalizeMilkyWay = fixsen_mw_indisk_ico[lowestDetectedCOTransition - 1]/thermalizedCO[lowestDetectedCOTransition - 1]
+    harrington_ico = harrington_ico /normalizeHarrington
+    harrington_ico_err = harrington_ico_err /normalizeHarrington
+    fixsen_mw_indisk_ico = fixsen_mw_indisk_ico/normalizeMilkyWay
+    fixsen_mw_indisk_ico_err = fixsen_mw_indisk_ico_err/normalizeMilkyWay
+    refFlux = thermalizedCO[coTransitions[coIntFluxes>0][0]-1]
+    normalizeFlux = coIntFluxes[coIntFluxes>0][0]/refFlux
+    # Plot the different SLEDs
+    plt.plot(coLinear,thermalizedCO,lw=2,ls=':',label='Thermalized',color='k')
+    f1.fill_between(harrington_co,harrington_ico+harrington_ico_err,harrington_ico-harrington_ico_err,color='k',alpha=0.2,label='Harrington+21',lw=0)
+    plt.fill_between(fixsen_mw_indisk_co,fixsen_mw_indisk_ico-fixsen_mw_indisk_ico_err,fixsen_mw_indisk_ico+fixsen_mw_indisk_ico_err,color='darkviolet',alpha=0.3,label='Milky Way',lw=0)
+    plt.errorbar(coTransitions[coIntFluxes>0],coIntFluxes[coIntFluxes>0]/normalizeFlux,coIntErrors[coIntFluxes>0]/normalizeFlux,marker='o',color='k',label='Observed lines')
+    if len(coTransitions[coIntFluxes<0])>0:
+        plt.errorbar(coTransitions[coIntFluxes<0],3*coIntErrors[coIntFluxes<0]/normalizeFlux,coIntErrors[coIntFluxes<0]/normalizeFlux,marker='o',uplims=True,color='grey',ls='none',label='Non-detections')
+    plt.xlabel(r'CO transition J$_{\rm up}$')
+    plt.ylabel('Velocity-integrated flux [scaled]')
+    plt.legend(loc='upper left',facecolor='white',edgecolor='none')
+    plt.xlim(0.5,coTransitions.max()+0.5)
+    coIntFluxes[coIntFluxes<0] = 3*coIntErrors[coIntFluxes<0]
+    plt.ylim(0,coIntFluxes.max()/normalizeFlux*ylimMultiplier)
 
 
 # def RSGquality(filter_down,filter_up,redshift_array,nr_of_CO_lines = 20):
